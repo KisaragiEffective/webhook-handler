@@ -1,21 +1,11 @@
 mod provider;
 
-use std::any::Any;
-use std::borrow::BorrowMut;
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::hash::Hash;
-use std::ops::Deref;
-use std::rc::Rc;
 use once_cell::sync::OnceCell;
-use std::str::FromStr;
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, RwLock};
 use actix_web::{App, guard, HttpRequest, HttpResponse, HttpServer, web};
-use actix_web::dev::RequestHead;
-use actix_web::guard::Guard;
 use qstring::QString;
 use serde_json::{json, Value};
-use provider::all::{Discord, ProviderRegistry, Todoist};
+use provider::all::{Discord, Todoist};
 
 static PROVIDER_REGISTRY: OnceCell<Arc<RwLock<ProviderRegistry>>> = OnceCell::new();
 
