@@ -1,6 +1,7 @@
 #![warn(clippy::pedantic, clippy::nursery)]
 #![deny(type_alias_bounds)]
 mod provider;
+mod payload;
 
 use once_cell::sync::OnceCell;
 use std::sync::{Arc, RwLock};
