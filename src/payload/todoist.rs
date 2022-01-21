@@ -1,6 +1,5 @@
 use serde::{Deserialize, Deserializer};
 use serde::de::Unexpected;
-use todoist_event::todoist_event;
 
 struct TodoistPayload {
     user_id: i64,
