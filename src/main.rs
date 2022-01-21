@@ -1,3 +1,5 @@
+#![warn(clippy::pedantic, clippy::nursery)]
+#![deny(type_alias_bounds)]
 mod provider;
 
 use once_cell::sync::OnceCell;
@@ -71,13 +73,13 @@ async fn main() -> std::io::Result<()> {
     DESTINATION_PROVIDER_REGISTRY.set(Arc::new(RwLock::new(DestinationProviderRegistry::new()))).ok().unwrap();
     if let Some(mut ad) = SOURCE_PROVIDER_REGISTRY.get() {
         let mut register = ad.write().unwrap();
-        register.register("discord", Box::new(Todoist));
+        // register.register("discord", &(Todoist));
         // register.register_source_provider("github", GitHub);
     }
 
     if let Some(mut ad) = DESTINATION_PROVIDER_REGISTRY.get() {
         let mut register = ad.write().unwrap();
-        register.register("todoist", Box::new(Discord));
+        // register.register("todoist", &(Discord));
     }
     HttpServer::new(|| {
         App::new()

@@ -5,47 +5,52 @@ use std::process::Output;
 use std::sync::{Arc, Mutex};
 use serde_json::Value;
 
-trait DestinationProvider {
+type Entry<'a, K, V> = (&'a K, &'a V);
+type ArcMut<A> = Arc<Mutex<A>>;
+type DerefTarget<D> = <D as Deref>::Target;
+
+pub trait DestinationProvider: Send + Sync {
     type OutputType;
 }
 
-trait SourceProvider {
+pub trait SourceProvider: Send + Sync {
     type InputType;
 }
 
-pub(crate) trait Registry {
+pub(crate) trait Registry : Send + Sync {
     type Value;
     fn register(&mut self, name: &str, registering_value: Self::Value);
-    fn get_by_name(&self, name: &str) -> Option<Arc<Mutex<<Self::Value as Deref>::Target>>> where Self::Value: Deref;
-    fn entries(&self) -> Vec<(&String, Arc<Mutex<<Self::Value as Deref>::Target>>)> where Self::Value: Deref;
+    fn get_by_name(&self, name: &str) -> Option<&ArcMut<&'static DerefTarget<Self::Value>>> where Self::Value: Deref;
+    fn entries(&self) -> Vec<Entry<'_, String, ArcMut<&'static DerefTarget<Self::Value>>>> where Self::Value: Deref;
     fn registered_provider_names(&self) -> Vec<&String>;
 }
 
 #[derive(Default)]
 pub struct SourceProviderRegistry {
-    pub(crate) provider: HashMap<String, Arc<Mutex<(dyn SourceProvider<InputType = dyn Any> + Send + Sync + 'static)>>>
+    pub(crate) provider: HashMap<String, ArcMut<&'static (dyn SourceProvider<InputType = dyn Any> + Send + Sync)>>
 }
 
 impl SourceProviderRegistry {
-    pub(crate) fn new() -> SourceProviderRegistry {
+    pub(crate) fn new() -> Self {
         SourceProviderRegistry {
             provider: HashMap::new()
         }
     }
 }
+
 impl Registry for SourceProviderRegistry {
-    type Value = Box<dyn SourceProvider<InputType = dyn Any + Send + Sync + 'static> + Send + Sync + 'static>;
+    type Value = &'static (dyn SourceProvider<InputType = dyn Any> + Send + Sync);
 
     fn register(&mut self, name: &str, registering_value: Self::Value) {
-        self.provider.insert(name.to_string(), Arc::new(Mutex::new(registering_value.deref())));
+        self.provider.insert(name.to_string(), Arc::new(Mutex::new(registering_value)));
     }
 
-    fn get_by_name(&self, name: &str) -> Option<Arc<Mutex<<Self::Value as Deref>::Target>>> {
-        self.provider.get(name).map(|x| *x)
+    fn get_by_name(&self, name: &str) -> Option<&ArcMut<&'static DerefTarget<Self::Value>>> {
+        self.provider.get(name).to_owned()
     }
 
-    fn entries(&self) -> Vec<(&String, Arc<Mutex<<Self::Value as Deref>::Target>>)> {
-        self.provider.iter().map(|(k, v)| (k, *v)).collect()
+    fn entries(&self) -> Vec<Entry<'_, String, ArcMut<&'static DerefTarget<Self::Value>>>> {
+        self.provider.iter().collect()
     }
 
     fn registered_provider_names(&self) -> Vec<&String> {
@@ -55,11 +60,11 @@ impl Registry for SourceProviderRegistry {
 
 #[derive(Default)]
 pub struct DestinationProviderRegistry {
-    pub(crate) provider: HashMap<String, Arc<Mutex<dyn DestinationProvider<OutputType = dyn Any> + Send + Sync>>>
+    pub(crate) provider: HashMap<String, ArcMut<&'static (dyn DestinationProvider<OutputType = dyn Any> + Send + Sync)>>
 }
 
 impl DestinationProviderRegistry {
-    pub(crate) fn new() -> DestinationProviderRegistry {
+    pub(crate) fn new() -> Self {
         DestinationProviderRegistry {
             provider: HashMap::new()
         }
@@ -67,18 +72,18 @@ impl DestinationProviderRegistry {
 }
 
 impl Registry for DestinationProviderRegistry {
-    type Value = Box<dyn DestinationProvider<OutputType = dyn Any> + Send + Sync + 'static>;
+    type Value = &'static (dyn DestinationProvider<OutputType = dyn Any> + Send + Sync);
 
     fn register(&mut self, name: &str, registering_value: Self::Value) {
-        self.provider.insert(name.to_string(), Arc::new(Mutex::new(*registering_value)));
+        self.provider.insert(name.to_string(), Arc::new(Mutex::new(registering_value)));
     }
 
-    fn get_by_name(&self, name: &str) -> Option<Arc<Mutex<<Self::Value as Deref>::Target>>> {
-        self.provider.get(name).map(|p| *p)
+    fn get_by_name(&self, name: &str) -> Option<&ArcMut<&'static DerefTarget<Self::Value>>> {
+        self.provider.get(name)
     }
 
-    fn entries(&self) -> Vec<(&String, Arc<Mutex<<Self::Value as Deref>::Target>>)> {
-        self.provider.iter().map(|(k, v)| (k, *v)).collect()
+    fn entries(&self) -> Vec<Entry<'_, String, ArcMut<&'static <Self::Value as Deref>::Target>>> {
+        self.provider.iter().collect()
     }
 
     fn registered_provider_names(&self) -> Vec<&String> {
@@ -105,11 +110,11 @@ pub struct Todoist;
 impl Provider for Discord {}
 
 impl DestinationProvider for Discord {
-    type OutputType = Vec<i32>;
+    type OutputType = (String);
 }
 
 impl Provider for Todoist {}
 
 impl SourceProvider for Todoist {
-    type InputType = Vec<i32>;
+    type InputType = (String);
 }
