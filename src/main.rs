@@ -71,15 +71,15 @@ static DESTINATION_PROVIDER_REGISTRY: OnceCell<Arc<RwLock<DestinationProviderReg
 async fn main() -> std::io::Result<()> {
     SOURCE_PROVIDER_REGISTRY.set(Arc::new(RwLock::new(SourceProviderRegistry::new()))).ok().unwrap();
     DESTINATION_PROVIDER_REGISTRY.set(Arc::new(RwLock::new(DestinationProviderRegistry::new()))).ok().unwrap();
-    if let Some(mut ad) = SOURCE_PROVIDER_REGISTRY.get() {
+    if let Some(ad) = SOURCE_PROVIDER_REGISTRY.get() {
         let mut register = ad.write().unwrap();
-        // register.register("discord", &(Todoist));
+        register.register("discord", &(Todoist));
         // register.register_source_provider("github", GitHub);
     }
 
-    if let Some(mut ad) = DESTINATION_PROVIDER_REGISTRY.get() {
+    if let Some(ad) = DESTINATION_PROVIDER_REGISTRY.get() {
         let mut register = ad.write().unwrap();
-        // register.register("todoist", &(Discord));
+        register.register("todoist", &(Discord));
     }
     HttpServer::new(|| {
         App::new()

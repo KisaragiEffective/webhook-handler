@@ -27,7 +27,7 @@ pub(crate) trait Registry : Send + Sync {
 
 #[derive(Default)]
 pub struct SourceProviderRegistry {
-    pub(crate) provider: HashMap<String, ArcMut<&'static (dyn SourceProvider<InputType = dyn Any> + Send + Sync)>>
+    pub(crate) provider: HashMap<String, ArcMut<&'static (dyn SourceProvider<InputType = &'static dyn Any> + Send + Sync)>>
 }
 
 impl SourceProviderRegistry {
@@ -39,7 +39,7 @@ impl SourceProviderRegistry {
 }
 
 impl Registry for SourceProviderRegistry {
-    type Value = &'static (dyn SourceProvider<InputType = dyn Any> + Send + Sync);
+    type Value = &'static (dyn SourceProvider<InputType = &'static dyn Any> + Send + Sync);
 
     fn register(&mut self, name: &str, registering_value: Self::Value) {
         self.provider.insert(name.to_string(), Arc::new(Mutex::new(registering_value)));
@@ -60,7 +60,7 @@ impl Registry for SourceProviderRegistry {
 
 #[derive(Default)]
 pub struct DestinationProviderRegistry {
-    pub(crate) provider: HashMap<String, ArcMut<&'static (dyn DestinationProvider<OutputType = dyn Any> + Send + Sync)>>
+    pub(crate) provider: HashMap<String, ArcMut<&'static (dyn DestinationProvider<OutputType = &'static dyn Any> + Send + Sync)>>
 }
 
 impl DestinationProviderRegistry {
@@ -72,7 +72,7 @@ impl DestinationProviderRegistry {
 }
 
 impl Registry for DestinationProviderRegistry {
-    type Value = &'static (dyn DestinationProvider<OutputType = dyn Any> + Send + Sync);
+    type Value = &'static (dyn DestinationProvider<OutputType = &'static dyn Any> + Send + Sync);
 
     fn register(&mut self, name: &str, registering_value: Self::Value) {
         self.provider.insert(name.to_string(), Arc::new(Mutex::new(registering_value)));
@@ -91,30 +91,14 @@ impl Registry for DestinationProviderRegistry {
     }
 }
 
-pub(crate) trait Provider {}
-
-impl Provider for dyn SourceProvider<InputType = dyn Any> {}
-
-impl Provider for dyn DestinationProvider<OutputType = dyn Any> {}
-
-trait ProviderPipeline {
-    type From: SourceProvider;
-    type To: DestinationProvider;
-    fn convert(from: <Self::From as SourceProvider>::InputType) -> <<Self as ProviderPipeline>::To as DestinationProvider>::OutputType;
-}
-
 pub struct Discord;
 
 pub struct Todoist;
 
-impl Provider for Discord {}
-
 impl DestinationProvider for Discord {
-    type OutputType = (String);
+    type OutputType = &'static dyn Any;
 }
 
-impl Provider for Todoist {}
-
 impl SourceProvider for Todoist {
-    type InputType = (String);
+    type InputType = &'static dyn Any;
 }
