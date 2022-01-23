@@ -1,91 +1,77 @@
 use serde::{Deserialize, Deserializer};
 use serde::de::Unexpected;
 
-struct TodoistPayload {
+#[derive(Deserialize)]
+pub struct TodoistPayload {
     user_id: i64,
-    event_name: String,
-    event_data: Box<dyn TodoistEvent>,
+    #[serde(flatten)]
+    event: TodoistEvent,
+    #[serde(rename = "version_number")]
+    version: String,
     initator: TodoistCollaborator
 }
 
 /// for all events, see https://developer.todoist.com/sync/v8/#configuration
-trait TodoistEvent {
-    fn event_name(&self) -> &'static str;
+#[derive(Deserialize)]
+#[serde(tag = "event_name")]
+enum TodoistEvent {
+    // TODO: replace those boilerplate with proc-macro
+    #[serde(rename = "item:added")]
+    ItemAdded(
+        #[serde(rename = "event_data")]
+        TodoistItem
+    ),
+    ItemRemoved(TodoistItem),
+    ItemDeleted(TodoistItem),
+    ItemCompleted(TodoistItem),
+    ItemUncompleted(TodoistItem),
+    NoteAdded(TodoistNote),
+    NoteUpdated(TodoistNote),
+    NoteDeleted(TodoistNote),
+    ProjectAdded(TodoistProject),
+    ProjectUpdated(TodoistProject),
+    ProjectDeleted(TodoistProject),
+    ProjectArchived(TodoistProject),
+    ProjectUnarchived(TodoistProject),
+    SectionAdded(TodoistSession),
+    SectionUpdated(TodoistSession),
+    SectionDeleted(TodoistSession),
+    SectionArchived(TodoistSession),
+    SectionUnarchived(TodoistSession),
+    LabelAdded(TodoistSession),
+    LabelDeleted(TodoistSession),
+    LabelUpdated(TodoistSession),
+    FilterAdded(TodoistFilter),
+    FilterDeleted(TodoistFilter),
+    FilterUpdated(TodoistFilter),
+    ReminderFired(TodoistReminder),
 }
 
 // #[todoist_event(event_name = "item:added")]
 struct ItemAdded(TodoistItem);
-
-// #[todoist_event("item:added")]
 struct ItemRemoved(TodoistItem);
-
-// #[todoist_event("item:added")]
 struct ItemDeleted(TodoistItem);
-
-// #[todoist_event("item:added")]
 struct ItemCompleted(TodoistItem);
-
-// #[todoist_event("item:added")]
 struct ItemUncompleted(TodoistItem);
-
-// #[todoist_event("item:added")]
 struct NoteAdded(TodoistNote);
-
-// #[todoist_event("item:added")]
 struct NoteUpdated(TodoistNote);
-
-// #[todoist_event("item:added")]
 struct NoteDeleted(TodoistNote);
-
-// #[todoist_event("item:added")]
 struct ProjectAdded(TodoistProject);
-
-// #[todoist_event("item:added")]
 struct ProjectUpdated(TodoistProject);
-
-// #[todoist_event("item:added")]
 struct ProjectDeleted(TodoistProject);
-
-// #[todoist_event("item:added")]
 struct ProjectArchived(TodoistProject);
-
-// #[todoist_event("item:added")]
 struct ProjectUnarchived(TodoistProject);
-
-// #[todoist_event("item:added")]
 struct SectionAdded(TodoistSession);
-
-// #[todoist_event("item:added")]
 struct SectionUpdated(TodoistSession);
-
-// #[todoist_event("item:added")]
 struct SectionDeleted(TodoistSession);
-
-// #[todoist_event("item:added")]
 struct SectionArchived(TodoistSession);
-
-// #[todoist_event("item:added")]
 struct SectionUnarchived(TodoistSession);
-
-// #[todoist_event("item:added")]
 struct LabelAdded(TodoistSession);
-
-// #[todoist_event("item:added")]
 struct LabelDeleted(TodoistSession);
-
-// #[todoist_event("item:added")]
 struct LabelUpdated(TodoistSession);
-
-// #[todoist_event("item:added")]
 struct FilterAdded(TodoistFilter);
-
-// #[todoist_event("item:added")]
 struct FilterDeleted(TodoistFilter);
-
-// #[todoist_event("item:added")]
 struct FilterUpdated(TodoistFilter);
-
-// #[todoist_event("item:added")]
 struct ReminderFired(TodoistReminder);
 
 /// please see https://developer.todoist.com/sync/v8/#items
@@ -150,9 +136,14 @@ enum TodoistPriority {
     P4,
 }
 
+/// please see https://developer.todoist.com/sync/v8/#collaborators
 #[derive(Deserialize)]
 struct TodoistCollaborator {
-    // TODO: fill fields
+    id: UserID,
+    email: String,
+    full_name: String,
+    timezone: String,
+    image_id: ImageID
 }
 
 #[derive(Deserialize)]
@@ -203,6 +194,9 @@ struct SectionID(i64);
 
 #[derive(Deserialize)]
 struct SyncID(i64); // TODO: this seems invalid
+
+#[derive(Deserialize)]
+struct ImageID(i64);
 
 #[derive(Deserialize)]
 struct TodoistDate;

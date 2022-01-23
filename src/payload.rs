@@ -1,1 +1,2 @@
-mod todoist;
+pub mod todoist;
+pub mod discord;
