@@ -6,7 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-actix-web = "3.3.3"
+# get rid of "there is no reactor running, must be called from the context of a Tokio 1.x runtime"
+actix-web = "4.0.0-beta.21"
 serde = { version = "1.0", features = [ "derive" ] }
 serde_json = "1.0"
 qstring = "0.7.2"

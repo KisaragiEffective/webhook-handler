@@ -8,10 +8,8 @@ use std::collections::HashMap;
 use std::marker::PhantomData;
 use once_cell::sync::OnceCell;
 use std::sync::{Arc, RwLock};
-use actix_web::{App, guard, HttpRequest, HttpResponse, HttpServer, Responder, web};
-use actix_web::dev::Factory;
-use actix_web::http::{HeaderName, HeaderValue};
-use actix_web::web::Json;
+use actix_web::{App, error, guard, HttpRequest, HttpResponse, HttpServer, Responder, web};
+use actix_web::web::{Json, JsonConfig};
 use qstring::QString;
 use reqwest::header::CONTENT_TYPE;
 use serde::{Deserialize, Deserializer, Serialize};
@@ -41,11 +39,17 @@ impl <'de, D: Deserialize<'de>, S: Serialize, F: 'static + FnOnce(D) -> S> JsonH
     }
 }
 
-async fn h<'de, D: Deserialize<'de>, S: Serialize, F: 'static + Copy + FnOnce(D) -> S>(this: Arc<JsonHandler<'de, D, S, F>>, Json(request): actix_web::web::Json<D>) -> impl Responder {
+async fn handle<'de, D: Deserialize<'de>, S: Serialize, F: 'static + Copy + FnOnce(D) -> S>(this: Arc<JsonHandler<'de, D, S, F>>, Json(incoming_data): actix_web::web::Json<D>) -> impl Responder {
     dbg!("enter");
     let client = reqwest::Client::new();
-    let x = &(this.f)(request);
-    let result = client.post(this.to).json(x).send().await.map(|_| ()).map_err(|x| anyhow!(x));
+    let outgoing_data: &S = &(this.f)(incoming_data);
+    let result = client
+        .post(this.to)
+        .json(outgoing_data)
+        .send()
+        .await
+        .map(|_| ())
+        .map_err(|x| anyhow!(x));
     match result {
         Ok(_) => {
             HttpResponse::NoContent()
@@ -62,19 +66,64 @@ struct ErrorDescription {
     reason: String
 }
 
+fn json_error_handler(err: error::JsonPayloadError, _req: &HttpRequest) -> error::Error {
+    use actix_web::error::JsonPayloadError;
+
+    let detail = err.to_string();
+    let resp = match &err {
+        JsonPayloadError::ContentType => {
+            HttpResponse::UnsupportedMediaType().body(detail)
+        }
+        JsonPayloadError::Deserialize(json_err) if json_err.is_data() => {
+            HttpResponse::UnprocessableEntity().body(detail)
+        }
+        _ => HttpResponse::BadRequest().body(detail),
+    };
+    error::InternalError::from_response(err, resp).into()
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    dbg!("start");
     HttpServer::new(|| {
-        let g =1;
         App::new()
+            .app_data(
+                JsonConfig::default().error_handler(json_error_handler)
+            )
             .service(
                 web::resource("/api/from/todoist/to/discord")
                     .route(
                         web::post()
                             .guard(guard::Header("content-type", "application/json"))
-                            .to(|a| h::<'static, TodoistPayload, DiscordWebhookPayload, _>( Arc::new(JsonHandler::new(
+                            .to(|a| handle::<'static, TodoistPayload, DiscordWebhookPayload, _>(Arc::new(JsonHandler::new(
                                 "https://discord.com/api/webhooks/934771607552016465/QIbXdt6S3YE6tNJXeaNPYzJmjb4tGfZALX1z245XPBcFdiIm9TdoSRiye_pvtnDNqfgr",
                                 |a: TodoistPayload| {
+                                    DiscordWebhookPayload {
+                                        content: "Shit!".to_string(),
+                                        username: None,
+                                        avatar_url: None,
+                                        tts: false,
+                                        embeds: Default::default(),
+                                        components: Default::default()
+                                    }
+                                }
+                            )), a))
+                    )
+                    .route(
+                        web::post()
+                            .to(|| {
+                                HttpResponse::BadRequest().body("Content-Type header must be included")
+                            })
+                    )
+            )
+            .service(
+                web::resource("/api/test")
+                    .route(
+                        web::post()
+                            .guard(guard::Header("content-type", "application/json"))
+                            .to(|a| handle::<'static, i32, DiscordWebhookPayload, _>(Arc::new(JsonHandler::new(
+                                "https://discord.com/api/webhooks/934771607552016465/QIbXdt6S3YE6tNJXeaNPYzJmjb4tGfZALX1z245XPBcFdiIm9TdoSRiye_pvtnDNqfgr",
+                                |a: i32| {
                                     DiscordWebhookPayload {
                                         content: "Shit!".to_string(),
                                         username: None,
@@ -97,7 +146,10 @@ async fn main() -> std::io::Result<()> {
     })
         .bind("127.0.0.1:8080")?
         .run()
-        .await
+        .await;
+
+    dbg!("stop");
+    Ok(())
 }
 
 struct TypeBox<T>(T);
