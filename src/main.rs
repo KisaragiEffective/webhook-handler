@@ -5,6 +5,8 @@ mod payload;
 use std::any::Any;
 use std::borrow::Borrow;
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::BufReader;
 use std::marker::PhantomData;
 use once_cell::sync::OnceCell;
 use std::sync::{Arc, RwLock};
@@ -15,6 +17,9 @@ use reqwest::header::CONTENT_TYPE;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::{json, Value};
 use anyhow::{Result, bail, anyhow, Error};
+use rustls::server::NoClientAuth;
+use rustls::{Certificate, PrivateKey, ServerConfig, SupportedCipherSuite};
+use rustls_pemfile::{certs, pkcs8_private_keys};
 use crate::payload::todoist::{TodoistEvent, TodoistPayload};
 use crate::payload::discord::{DiscordWebhookPayload, Embed, EmbedCollection};
 
@@ -165,7 +170,25 @@ fn todoist_to_webhook(incoming_data: TodoistPayload) -> DiscordWebhookPayload {
 }
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    // This function contains code snippet which is licensed with Apache License 2.0
+    // from https://github.com/actix/examples.
+    // See https://www.apache.org/licenses/LICENSE-2.0.txt for full text.
     dbg!("start");
+    // load SSL keys
+    let mut config = ServerConfig::builder()
+        .with_safe_defaults()
+        .with_no_client_auth();
+
+    let cert_file = &mut BufReader::new(File::open("cert.pem").unwrap());
+    let key_file = &mut BufReader::new(File::open("key.pem").unwrap());
+    let cert_chain = certs(cert_file).unwrap();
+    let cert_chain = cert_chain.iter().map(|a| Certificate(a.clone())).collect();
+    let mut keys = pkcs8_private_keys(key_file).unwrap().iter().map(|x| PrivateKey(x.clone())).collect::<Vec<_>>();
+    if keys.is_empty() {
+        eprintln!("Could not locate PKCS 8 private keys.");
+        std::process::exit(1);
+    }
+    let config = config.with_single_cert(cert_chain, keys.remove(0)).unwrap();
     HttpServer::new(|| {
         App::new()
             .app_data(
@@ -216,7 +239,8 @@ async fn main() -> std::io::Result<()> {
             )
 
     })
-        .bind("127.0.0.1:8080")?
+        .bind_rustls("127.0.0.1:443", config)?
+        .bind("127.0.0.1:80")?
         .run()
         .await;
 
