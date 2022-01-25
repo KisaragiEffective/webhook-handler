@@ -1,5 +1,6 @@
 use serde::{Deserialize, Deserializer};
 use serde::de::Unexpected;
+use iso8601::DateTime as ISO8601DateTime;
 
 #[derive(Deserialize)]
 pub struct TodoistPayload {
@@ -166,7 +167,7 @@ pub struct TodoistItem {
     collapsed: bool,
     labels: Vec<TaskID>,
     /// The UserID who created the task. This value is set to null on tasks created before 2019/10/31.
-    added_by_uid: UserID,
+    added_by_uid: Option<UserID>,
     assigned_by_uid: UserID,
     responsible_uid: Option<UserID>,
     #[serde(rename = "checked", deserialize_with = "deserialize_one_zero_bool")]
@@ -217,9 +218,49 @@ pub struct TodoistCollaborator {
     image_id: ImageID
 }
 
+/// please see https://developer.todoist.com/sync/v8/#item-notes
 #[derive(Deserialize)]
 pub struct TodoistNote {
-    // TODO: fill fields
+    id: NoteID,
+    legacy_id: LegacyNoteID,
+    posted_uid: UserID,
+    item_id: TaskID,
+    legacy_item_id: LegacyTaskID,
+    project_id: ProjectID,
+    legacy_project_id: LegacyProjectID,
+    content: String,
+    file_attachment: TodoistFileAttachment,
+    uids_to_notify: Option<Vec<UserID>>,
+    #[serde(deserialize_with = "deserialize_one_zero_bool")]
+    is_deleted: bool,
+    // Posted date
+    #[serde(deserialize_with = "deserialize_iso8601")] // ?
+    posted: ISO8601DateTime,
+    reactions: Reactions,
+}
+
+/// https://developer.todoist.com/sync/v8/#file-attachments
+#[derive(Deserialize)]
+pub struct TodoistFileAttachment {
+    #[serde(rename = "file_name")]
+    name: String,
+    #[serde(rename = "file_size")]
+    size: usize,
+    // TODO: MIME type
+    #[serde(rename = "file_type")]
+    mime: String,
+    #[serde(rename = "file_url")]
+    url: String,
+    // TODO: this may be enum
+    upload_state: String,
+}
+
+#[derive(Deserialize)]
+pub struct Reactions {
+    #[serde(rename = "♥", default = "Option::None")]
+    love: Option<Vec<UserID>>,
+    #[serde(rename = "👍")]
+    good: Option<Vec<UserID>>,
 }
 
 #[derive(Deserialize)]
@@ -271,3 +312,9 @@ pub struct ImageID(i64);
 
 #[derive(Deserialize)]
 pub struct TodoistDate;
+
+#[derive(Deserialize)]
+pub struct NoteID(i64);
+
+#[derive(Deserialize)]
+pub struct LegacyNoteID(i64);
