@@ -42,40 +42,40 @@ pub struct Component {
 }
 
 #[derive(Serialize, Default)]
-pub struct EmbedCollection(Vec<Embed>);
+pub struct EmbedCollection(pub Vec<Embed>);
 
 /// https://discord.com/developers/docs/resources/channel#embed-object
 #[derive(Serialize, Default)]
-struct Embed {
+pub struct Embed {
     #[serde(skip_serializing_if = "Option::is_none")]
-    title: Option<String>,
+    pub title: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    description: Option<String>,
+    pub description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    url: Option<String>,
+    pub url: Option<String>,
     // #[serde(skip_serializing_if = "Option::is_none", serialize_with = "f")]
     // timestamp: Option<ISO8601DateTime>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    color: Option<u32>,
+    pub color: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    footer: Option<EmbedFooter>,
+    pub footer: Option<EmbedFooter>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    image: Option<EmbedImage>,
+    pub image: Option<EmbedImage>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    thumbnail: Option<EmbedThumbnail>,
+    pub thumbnail: Option<EmbedThumbnail>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    video: Option<EmbedVideo>,
+    pub video: Option<EmbedVideo>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    provider: Option<EmbedProvider>,
+    pub provider: Option<EmbedProvider>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    author: Option<EmbedAuthor>,
+    pub author: Option<EmbedAuthor>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    fields: Option<EmbedFields>
+    pub fields: Option<EmbedFields>
 }
 
 /// https://discord.com/developers/docs/resources/channel#embed-object-embed-footer-structure
 #[derive(Serialize)]
-struct EmbedFooter {
+pub struct EmbedFooter {
     text: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     icon_url: Option<String>,
@@ -86,7 +86,7 @@ struct EmbedFooter {
 //noinspection DuplicatedCode
 /// https://discord.com/developers/docs/resources/channel#embed-object-embed-image-structure
 #[derive(Serialize)]
-struct EmbedImage {
+pub struct EmbedImage {
     url: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     proxy_url: Option<String>,
@@ -99,7 +99,7 @@ struct EmbedImage {
 //noinspection DuplicatedCode
 /// https://discord.com/developers/docs/resources/channel#embed-object-embed-thumbnail-structure
 #[derive(Serialize)]
-struct EmbedThumbnail {
+pub struct EmbedThumbnail {
     url: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     proxy_url: Option<String>,
@@ -110,7 +110,7 @@ struct EmbedThumbnail {
 }
 
 #[derive(Serialize)]
-struct EmbedVideo {
+pub struct EmbedVideo {
     #[serde(skip_serializing_if = "Option::is_none")]
     url: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -123,14 +123,14 @@ struct EmbedVideo {
 
 /// https://discord.com/developers/docs/resources/channel#embed-object-embed-author-structure
 #[derive(Serialize)]
-struct EmbedProvider {
+pub struct EmbedProvider {
     name: Option<String>,
     url: Option<String>,
 }
 
 /// https://discord.com/developers/docs/resources/channel#embed-object-embed-author-structure
 #[derive(Serialize)]
-struct EmbedAuthor {
+pub struct EmbedAuthor {
     name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     url: Option<String>,
@@ -141,11 +141,11 @@ struct EmbedAuthor {
 }
 
 #[derive(Serialize, Eq, PartialEq, Clone, Hash)]
-struct EmbedFields(Vec<EmbedField>);
+pub struct EmbedFields(Vec<EmbedField>);
 
 /// https://discord.com/developers/docs/resources/channel#embed-object-embed-field-structure
 #[derive(Serialize, Eq, PartialEq, Clone, Hash)]
-struct EmbedField {
+pub struct EmbedField {
     name: String,
     value: String,
     // #[serde(skip_serializing_if = "_false()")]
