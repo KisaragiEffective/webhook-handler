@@ -1639,6 +1639,8 @@ dependencies = [
  "iso8601",
  "once_cell",
  "qstring",
+ "rand",
+ "rand_chacha",
  "reqwest",
  "rustls",
  "rustls-pemfile",

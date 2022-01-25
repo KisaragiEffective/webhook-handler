@@ -1,6 +1,7 @@
 #![warn(clippy::pedantic, clippy::nursery)]
 #![deny(type_alias_bounds, legacy_derive_helpers, late_bound_lifetime_arguments)]
 mod payload;
+mod call;
 
 use std::any::Any;
 use std::borrow::Borrow;
@@ -11,7 +12,7 @@ use std::marker::PhantomData;
 use once_cell::sync::OnceCell;
 use std::sync::{Arc, RwLock};
 use actix_web::{App, error, guard, HttpRequest, HttpResponse, HttpServer, Responder, web};
-use actix_web::web::{Json, JsonConfig};
+use actix_web::web::{Json, JsonConfig, Query};
 use qstring::QString;
 use reqwest::header::CONTENT_TYPE;
 use serde::{Deserialize, Deserializer, Serialize};
@@ -92,12 +93,17 @@ impl <'de, D: Deserialize<'de>, S: Serialize, F: 'static + FnOnce(D) -> S> JsonH
     }
 }
 
-async fn handle<'de, D: Deserialize<'de>, S: Serialize, F: 'static + Copy + FnOnce(D) -> S>(this: Arc<JsonHandler<'de, D, S, F>>, Json(incoming_data): actix_web::web::Json<D>) -> impl Responder {
+async fn handle<'de, D: Deserialize<'de>, S: Serialize, F: 'static + Copy + FnOnce(D) -> S>(
+    handler: Arc<JsonHandler<'de, D, S, F>>,
+    Json(incoming_data): actix_web::web::Json<D>,
+    Query(api_key): actix_web::web::Query<ApiKey>,
+) -> impl Responder {
+    // TODO: api_key=something in query string
     dbg!("enter");
     let client = reqwest::Client::new();
-    let outgoing_data: &S = &(this.f)(incoming_data);
+    let outgoing_data: &S = &(handler.f)(incoming_data);
     let result = client
-        .post(this.to)
+        .post(handler.to)
         .json(outgoing_data)
         .send()
         .await
@@ -202,10 +208,10 @@ async fn main() -> std::io::Result<()> {
                     .route(
                         web::post()
                             .guard(guard::Header("content-type", "application/json"))
-                            .to(|a| handle::<'static, TodoistPayload, DiscordWebhookPayload, _>(Arc::new(JsonHandler::new(
+                            .to(|a, b| handle::<'static, TodoistPayload, DiscordWebhookPayload, _>(Arc::new(JsonHandler::new(
                                 "https://discord.com/api/webhooks/934771607552016465/QIbXdt6S3YE6tNJXeaNPYzJmjb4tGfZALX1z245XPBcFdiIm9TdoSRiye_pvtnDNqfgr",
                                 todoist_to_webhook
-                            )), a))
+                            )), a, b))
                     )
                     .route(
                         web::post()
