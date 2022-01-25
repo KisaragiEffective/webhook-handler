@@ -21,3 +21,4 @@ rustls = "0.20"
 rustls-pemfile = "0.2"
 rand = "0.8"
 rand_chacha = "0.3"
+base64 = { version = "0.13.0" }

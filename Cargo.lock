@@ -1636,6 +1636,7 @@ version = "0.1.0"
 dependencies = [
  "actix-web",
  "anyhow",
+ "base64",
  "iso8601",
  "once_cell",
  "qstring",
