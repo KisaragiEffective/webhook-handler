@@ -3,18 +3,18 @@ use serde::de::Unexpected;
 
 #[derive(Deserialize)]
 pub struct TodoistPayload {
-    user_id: i64,
+    pub user_id: i64,
     #[serde(flatten)]
-    event: TodoistEvent,
+    pub event: TodoistEvent,
     #[serde(rename = "version_number")]
-    version: String,
-    initator: TodoistCollaborator
+    pub version: String,
+    pub initiator: TodoistCollaborator
 }
 
 /// for all events, see https://developer.todoist.com/sync/v8/#configuration
 #[derive(Deserialize)]
 #[serde(tag = "event_name")]
-enum TodoistEvent {
+pub enum TodoistEvent {
     // TODO: replace those boilerplate with proc-macro
     #[serde(rename = "item:added")]
     ItemAdded(
@@ -147,7 +147,7 @@ enum TodoistEvent {
 
 /// please see https://developer.todoist.com/sync/v8/#items
 #[derive(Deserialize)]
-struct TodoistItem {
+pub struct TodoistItem {
     id: TaskID,
     legacy_id: Option<LegacyTaskID>,
     user_id: UserID,
@@ -209,7 +209,7 @@ enum TodoistPriority {
 
 /// please see https://developer.todoist.com/sync/v8/#collaborators
 #[derive(Deserialize)]
-struct TodoistCollaborator {
+pub struct TodoistCollaborator {
     id: UserID,
     email: String,
     full_name: String,
@@ -218,56 +218,56 @@ struct TodoistCollaborator {
 }
 
 #[derive(Deserialize)]
-struct TodoistNote {
+pub struct TodoistNote {
     // TODO: fill fields
 }
 
 #[derive(Deserialize)]
-struct TodoistProject {
+pub struct TodoistProject {
     // TODO: fill fields
 }
 
 #[derive(Deserialize)]
-struct TodoistSession {
+pub struct TodoistSession {
     // TODO: fill fields
 }
 
 #[derive(Deserialize)]
-struct TodoistFilter {
+pub struct TodoistFilter {
     // TODO: fill fields
 }
 
 #[derive(Deserialize)]
-struct TodoistReminder {
+pub struct TodoistReminder {
     // TODO: fill fields
 }
 
 #[derive(Deserialize)]
-struct TaskID(i64);
+pub struct TaskID(i64);
 
 #[derive(Deserialize)]
-struct LegacyTaskID(i64);
+pub struct LegacyTaskID(i64);
 
 #[derive(Deserialize)]
-struct UserID(i64);
+pub struct UserID(i64);
 
 #[derive(Deserialize)]
-struct ProjectID(i64);
+pub struct ProjectID(i64);
 
 #[derive(Deserialize)]
-struct LegacyProjectID(i64);
+pub struct LegacyProjectID(i64);
 
 #[derive(Deserialize)]
-struct Due(i64); // TODO: this seems invalid
+pub struct Due(i64); // TODO: this seems invalid
 
 #[derive(Deserialize)]
-struct SectionID(i64);
+pub struct SectionID(i64);
 
 #[derive(Deserialize)]
-struct SyncID(i64); // TODO: this seems invalid
+pub struct SyncID(i64); // TODO: this seems invalid
 
 #[derive(Deserialize)]
-struct ImageID(i64);
+pub struct ImageID(i64);
 
 #[derive(Deserialize)]
-struct TodoistDate;
+pub struct TodoistDate;
