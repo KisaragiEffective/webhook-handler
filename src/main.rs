@@ -3,6 +3,7 @@
 mod payload;
 mod call;
 mod config;
+mod serde_integration;
 
 use std::any::Any;
 use std::borrow::Borrow;
