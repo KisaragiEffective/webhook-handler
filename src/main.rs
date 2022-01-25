@@ -15,15 +15,63 @@ use reqwest::header::CONTENT_TYPE;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::{json, Value};
 use anyhow::{Result, bail, anyhow, Error};
-use crate::payload::todoist::TodoistPayload;
-use crate::payload::discord::DiscordWebhookPayload;
+use crate::payload::todoist::{TodoistEvent, TodoistPayload};
+use crate::payload::discord::{DiscordWebhookPayload, Embed, EmbedCollection};
 
-type PhantomRef<'a> = PhantomData<&'a ()>;
+type PhantomLifetime<'a> = PhantomData<&'a ()>;
+
+struct GenericIncomingDeserializer<'de, D: Deserialize<'de>, F: FnOnce(&'static str) -> D> {
+    f: F,
+    __phantom: PhantomLifetime<'de>
+}
+
+impl <'de, D: Deserialize<'de>, F: FnOnce(&'static str) -> D> GenericIncomingDeserializer<'de, D, F> {
+    fn new(f: F) -> Self {
+        GenericIncomingDeserializer {
+            f,
+            __phantom: PhantomData
+        }
+    }
+}
+
+struct GenericOutgoingSerializer<S: Serialize, F: FnOnce(S) -> &'static str> {
+    f: F,
+    __phantom: PhantomData<S>
+}
+
+impl <S: Serialize, F: FnOnce(S) -> &'static str> GenericOutgoingSerializer<S, F> {
+    fn new(f: F) -> Self {
+        GenericOutgoingSerializer {
+            f,
+            __phantom: PhantomData
+        }
+    }
+}
+
+struct GenericHandler<'de, D: Deserialize<'de>, S: Serialize, F: 'static + FnOnce(D) -> S, TD: FnOnce(&'static str) -> D, TS: FnOnce(S) -> &'static str> {
+    incoming_deserializer: GenericIncomingDeserializer<'de, D, TD>,
+    outgoing_serializer: GenericOutgoingSerializer<S, TS>,
+    post_url: &'static str,
+    mapper: Arc<F>,
+    __phantom: PhantomLifetime<'de>
+}
+
+impl <'de, D: Deserialize<'de>, S: Serialize, F: 'static + FnOnce(D) -> S, TD: FnOnce(&'static str) -> D, TS: FnOnce(S) -> &'static str> GenericHandler<'de, D, S, F, TD, TS> {
+    fn new(post_url: &'static str, incoming_deserializer: TD, mapper: F, outgoing_serializer: TS) -> Self {
+        GenericHandler {
+            incoming_deserializer: GenericIncomingDeserializer::new(incoming_deserializer),
+            outgoing_serializer: GenericOutgoingSerializer::new(outgoing_serializer),
+            post_url,
+            mapper: Arc::new(mapper),
+            __phantom: PhantomData
+        }
+    }
+}
 
 struct JsonHandler<'de, D: Deserialize<'de>, S: Serialize, F: 'static + FnOnce(D) -> S + ?Sized> {
     to: &'static str,
     f: Arc<F>,
-    __phantom_de: PhantomRef<'de>,
+    __phantom_de: PhantomLifetime<'de>,
     __phantom_s: PhantomData<S>,
     __phantom_d: PhantomData<D>
 }
@@ -82,6 +130,39 @@ fn json_error_handler(err: error::JsonPayloadError, _req: &HttpRequest) -> error
     error::InternalError::from_response(err, resp).into()
 }
 
+fn todoist_to_webhook(incoming_data: TodoistPayload) -> DiscordWebhookPayload {
+    let username = Some("Todoist".to_string());
+    let avatar_url = Some("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Cib-todoist_%28CoreUI_Icons_v1.0.0%29.svg/240px-Cib-todoist_%28CoreUI_Icons_v1.0.0%29.svg.png".to_string());
+    let content = "abx".to_string();
+    let tts = false;
+    match incoming_data.event {
+        TodoistEvent::NoteAdded(note) => {
+            DiscordWebhookPayload {
+                content,
+                username,
+                avatar_url,
+                tts,
+                embeds: EmbedCollection(vec![
+                    Embed {
+                        title: None,
+                        description: None,
+                        url: None,
+                        color: None,
+                        footer: None,
+                        image: None,
+                        thumbnail: None,
+                        video: None,
+                        provider: None,
+                        author: None,
+                        fields: None
+                    }
+                ]),
+                components: Default::default()
+            }
+        }
+        _ => unreachable!("oops")
+    }
+}
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dbg!("start");
@@ -97,16 +178,7 @@ async fn main() -> std::io::Result<()> {
                             .guard(guard::Header("content-type", "application/json"))
                             .to(|a| handle::<'static, TodoistPayload, DiscordWebhookPayload, _>(Arc::new(JsonHandler::new(
                                 "https://discord.com/api/webhooks/934771607552016465/QIbXdt6S3YE6tNJXeaNPYzJmjb4tGfZALX1z245XPBcFdiIm9TdoSRiye_pvtnDNqfgr",
-                                |a: TodoistPayload| {
-                                    DiscordWebhookPayload {
-                                        content: "Shit!".to_string(),
-                                        username: None,
-                                        avatar_url: None,
-                                        tts: false,
-                                        embeds: Default::default(),
-                                        components: Default::default()
-                                    }
-                                }
+                                todoist_to_webhook
                             )), a))
                     )
                     .route(
