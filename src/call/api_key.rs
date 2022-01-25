@@ -1,7 +1,7 @@
 use rand::prelude::*;
 use rand_chacha::ChaCha20Rng;
 
-struct ApiKey(pub(in crate::call) [u8; 64]);
+pub struct ApiKey(pub(in crate::call) [u8; 64]);
 
 impl ApiKey {
     /// 暗号学的に安全な乱数を使用した新しいインスタンスの生成
