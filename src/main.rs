@@ -2,6 +2,7 @@
 #![deny(type_alias_bounds, legacy_derive_helpers, late_bound_lifetime_arguments)]
 mod payload;
 mod call;
+mod config;
 
 use std::any::Any;
 use std::borrow::Borrow;
@@ -197,6 +198,9 @@ async fn main() -> std::io::Result<()> {
         std::process::exit(1);
     }
     let config = config.with_single_cert(cert_chain, keys.remove(0)).unwrap();
+    println!("Reading config...");
+    let running_config = File::open("data/config.yml").unwrap();
+    let running_config = serde_json::from_reader::<_, crate::config::config::Config>(BufReader::new(running_config)).unwrap();
     println!("building HttpServer, binding ports...");
     HttpServer::new(|| {
         App::new()
@@ -209,7 +213,7 @@ async fn main() -> std::io::Result<()> {
                         web::post()
                             .guard(guard::Header("content-type", "application/json"))
                             .to(|a, b| handle::<'static, TodoistPayload, DiscordWebhookPayload, _>(Arc::new(JsonHandler::new(
-                                "https://discord.com/api/webhooks/934771607552016465/QIbXdt6S3YE6tNJXeaNPYzJmjb4tGfZALX1z245XPBcFdiIm9TdoSRiye_pvtnDNqfgr",
+                                running_config.discord_webhook.unwrap().as_str(),
                                 todoist_to_webhook
                             )), a, b))
                     )
