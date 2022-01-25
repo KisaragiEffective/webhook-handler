@@ -1,6 +1,6 @@
 use serde::{Deserialize, Deserializer};
-use serde::de::Unexpected;
-use iso8601::DateTime as ISO8601DateTime;
+use serde::de::{Error, Unexpected};
+use iso8601::{DateTime};
 
 #[derive(Deserialize)]
 pub struct TodoistPayload {
@@ -196,6 +196,21 @@ fn deserialize_one_zero_bool<'de, D: Deserializer<'de>>(deserializer: D) -> Resu
     }
 }
 
+fn deserialize_iso8601<'de, D: Deserializer<'de>>(deserializer: D) -> Result<DateTime, D::Error> {
+    use std::str::FromStr;
+    match String::deserialize(deserializer) {
+        Ok(a) => {
+            match DateTime::from_str(a.as_str()) {
+                Ok(a) => { Ok(a) }
+                Err(b) => { Err(D::Error::custom(b)) }
+            }
+        }
+        Err(b) => {
+            Err(D::Error::custom(b))
+        }
+    }
+}
+
 #[derive(Deserialize)]
 enum TodoistPriority {
     // raw: 4
@@ -235,9 +250,10 @@ pub struct TodoistNote {
     is_deleted: bool,
     // Posted date
     #[serde(deserialize_with = "deserialize_iso8601")] // ?
-    posted: ISO8601DateTime,
+    posted: DateTime,
     reactions: Reactions,
 }
+
 
 /// https://developer.todoist.com/sync/v8/#file-attachments
 #[derive(Deserialize)]
@@ -257,10 +273,14 @@ pub struct TodoistFileAttachment {
 
 #[derive(Deserialize)]
 pub struct Reactions {
-    #[serde(rename = "♥", default = "Option::None")]
+    #[serde(rename = "♥", default = "none")]
     love: Option<Vec<UserID>>,
-    #[serde(rename = "👍")]
+    #[serde(rename = "👍", default = "none")]
     good: Option<Vec<UserID>>,
+}
+
+const fn none<T>() -> Option<T> {
+    None
 }
 
 #[derive(Deserialize)]
