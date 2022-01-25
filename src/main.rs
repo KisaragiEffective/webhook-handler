@@ -173,13 +173,15 @@ async fn main() -> std::io::Result<()> {
     // This function contains code snippet which is licensed with Apache License 2.0
     // from https://github.com/actix/examples.
     // See https://www.apache.org/licenses/LICENSE-2.0.txt for full text.
-    dbg!("start");
+    println!("starting");
     // load SSL keys
     let mut config = ServerConfig::builder()
         .with_safe_defaults()
         .with_no_client_auth();
 
+    println!("loading cert.pem");
     let cert_file = &mut BufReader::new(File::open("cert.pem").unwrap());
+    println!("loading key.pem");
     let key_file = &mut BufReader::new(File::open("key.pem").unwrap());
     let cert_chain = certs(cert_file).unwrap();
     let cert_chain = cert_chain.iter().map(|a| Certificate(a.clone())).collect();
@@ -189,6 +191,7 @@ async fn main() -> std::io::Result<()> {
         std::process::exit(1);
     }
     let config = config.with_single_cert(cert_chain, keys.remove(0)).unwrap();
+    println!("building HttpServer");
     HttpServer::new(|| {
         App::new()
             .app_data(
@@ -244,7 +247,7 @@ async fn main() -> std::io::Result<()> {
         .run()
         .await;
 
-    dbg!("stop");
+    println!("stopped");
     Ok(())
 }
 
