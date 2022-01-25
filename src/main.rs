@@ -220,33 +220,6 @@ async fn main() -> std::io::Result<()> {
                             })
                     )
             )
-            .service(
-                web::resource("/api/test")
-                    .route(
-                        web::post()
-                            .guard(guard::Header("content-type", "application/json"))
-                            .to(|a| handle::<'static, i32, DiscordWebhookPayload, _>(Arc::new(JsonHandler::new(
-                                "https://discord.com/api/webhooks/934771607552016465/QIbXdt6S3YE6tNJXeaNPYzJmjb4tGfZALX1z245XPBcFdiIm9TdoSRiye_pvtnDNqfgr",
-                                |a: i32| {
-                                    DiscordWebhookPayload {
-                                        content: "Shit!".to_string(),
-                                        username: None,
-                                        avatar_url: None,
-                                        tts: false,
-                                        embeds: Default::default(),
-                                        components: Default::default()
-                                    }
-                                }
-                            )), a))
-                    )
-                    .route(
-                        web::post()
-                            .to(|| {
-                                HttpResponse::BadRequest().body("Content-Type header must be included")
-                            })
-                    )
-            )
-
     })
         .bind_rustls("127.0.0.1:443", config)?
         .bind("127.0.0.1:80")?
