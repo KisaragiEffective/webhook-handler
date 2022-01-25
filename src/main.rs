@@ -28,11 +28,12 @@ use crate::generic_format_io::outgoing::GenericOutgoingSerializer;
 use crate::payload::todoist::{TodoistEvent, TodoistPayload};
 use crate::payload::discord::{DiscordWebhookPayload, Embed, EmbedCollection};
 use crate::call::api_key::ApiKey;
+use crate::config::config::Config;
 
 type PhantomLifetime<'a> = PhantomData<&'a ()>;
 
 struct JsonHandler<'de, D: Deserialize<'de>, S: Serialize, F: 'static + FnOnce(D) -> S + ?Sized> {
-    to: &'static str,
+    to: String,
     f: Arc<F>,
     __phantom_de: PhantomLifetime<'de>,
     __phantom_s: PhantomData<S>,
@@ -40,7 +41,7 @@ struct JsonHandler<'de, D: Deserialize<'de>, S: Serialize, F: 'static + FnOnce(D
 }
 
 impl <'de, D: Deserialize<'de>, S: Serialize, F: 'static + FnOnce(D) -> S> JsonHandler<'de, D, S, F> {
-    fn new(to: &'static str, f: F) -> Self {
+    fn new(to: String, f: F) -> Self {
         JsonHandler::<'de, D, S, F> {
             to, f: Arc::new(f),
             __phantom_d: PhantomData,
@@ -60,7 +61,7 @@ async fn handle<'de, D: Deserialize<'de>, S: Serialize, F: 'static + Copy + FnOn
     let client = reqwest::Client::new();
     let outgoing_data: &S = &(handler.f)(incoming_data);
     let result = client
-        .post(handler.to)
+        .post(&handler.to)
         .json(outgoing_data)
         .send()
         .await
@@ -131,6 +132,9 @@ fn todoist_to_webhook(incoming_data: TodoistPayload) -> DiscordWebhookPayload {
         _ => unreachable!("oops")
     }
 }
+
+static RUNNING_CONFIG: OnceCell<Config> = OnceCell::new();
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // This function contains code snippet which is licensed with Apache License 2.0
@@ -156,7 +160,7 @@ async fn main() -> std::io::Result<()> {
     let config = config.with_single_cert(cert_chain, keys.remove(0)).unwrap();
     println!("Reading config...");
     let running_config = File::open("data/config.yml").unwrap();
-    let running_config = serde_json::from_reader::<_, crate::config::config::Config>(BufReader::new(running_config)).unwrap();
+    RUNNING_CONFIG.set(serde_json::from_reader::<_, crate::config::config::Config>(BufReader::new(running_config)).unwrap());
     println!("building HttpServer, binding ports...");
     HttpServer::new(|| {
         App::new()
@@ -169,7 +173,7 @@ async fn main() -> std::io::Result<()> {
                         web::post()
                             .guard(guard::Header("content-type", "application/json"))
                             .to(|a, b| handle::<'static, TodoistPayload, DiscordWebhookPayload, _>(Arc::new(JsonHandler::new(
-                                running_config.discord_webhook.unwrap().as_str(),
+                                RUNNING_CONFIG.get().unwrap().discord_webhook.clone().unwrap(),
                                 todoist_to_webhook
                             )), a, b))
                     )
