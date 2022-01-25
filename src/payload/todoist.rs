@@ -21,58 +21,129 @@ enum TodoistEvent {
         #[serde(rename = "event_data")]
         TodoistItem
     ),
-    ItemRemoved(TodoistItem),
-    ItemDeleted(TodoistItem),
-    ItemCompleted(TodoistItem),
-    ItemUncompleted(TodoistItem),
-    NoteAdded(TodoistNote),
-    NoteUpdated(TodoistNote),
-    NoteDeleted(TodoistNote),
-    ProjectAdded(TodoistProject),
-    ProjectUpdated(TodoistProject),
-    ProjectDeleted(TodoistProject),
-    ProjectArchived(TodoistProject),
-    ProjectUnarchived(TodoistProject),
-    SectionAdded(TodoistSession),
-    SectionUpdated(TodoistSession),
-    SectionDeleted(TodoistSession),
-    SectionArchived(TodoistSession),
-    SectionUnarchived(TodoistSession),
-    LabelAdded(TodoistSession),
-    LabelDeleted(TodoistSession),
-    LabelUpdated(TodoistSession),
-    FilterAdded(TodoistFilter),
-    FilterDeleted(TodoistFilter),
-    FilterUpdated(TodoistFilter),
-    ReminderFired(TodoistReminder),
-}
+    #[serde(rename = "item:removed")]
+    ItemRemoved(
+        #[serde(rename = "event_data")]
+        TodoistItem
+    ),
+    #[serde(rename = "item:deleted")]
+    ItemDeleted(
+        #[serde(rename = "event_data")]
+        TodoistItem
+    ),
+    #[serde(rename = "item:completed")]
+    ItemCompleted(
+        #[serde(rename = "event_data")]
+        TodoistItem
+    ),
+    #[serde(rename = "item:uncompleted")]
+    ItemUncompleted(
+        #[serde(rename = "event_data")]
+        TodoistItem
+    ),
+    #[serde(rename = "note:added")]
+    NoteAdded(
+        #[serde(rename = "event_data")]
+        TodoistNote
+    ),
+    #[serde(rename = "note:updated")]
+    NoteUpdated(
+        #[serde(rename = "event_data")]
+        TodoistNote
+    ),
+    #[serde(rename = "note:deleted")]
+    NoteDeleted(
+        #[serde(rename = "event_data")]
+        TodoistNote
+    ),
+    #[serde(rename = "project:added")]
+    ProjectAdded(
+        #[serde(rename = "event_data")]
+        TodoistProject
+    ),
+    #[serde(rename = "project:updated")]
+    ProjectUpdated(
+        #[serde(rename = "event_data")]
+        TodoistProject
+    ),
+    #[serde(rename = "project:deleted")]
+    ProjectDeleted(
+        #[serde(rename = "event_data")]
+        TodoistProject
+    ),
+    #[serde(rename = "project:archived")]
+    ProjectArchived(
+        #[serde(rename = "event_data")]
+        TodoistProject
+    ),
+    #[serde(rename = "project:unarchived")]
+    ProjectUnarchived(
+        #[serde(rename = "event_data")]
+        TodoistProject
+    ),
+    #[serde(rename = "section:added")]
+    SectionAdded(
+        #[serde(rename = "event_data")]
+        TodoistSession
+    ),
+    #[serde(rename = "section:updated")]
+    SectionUpdated(
+        #[serde(rename = "event_data")]
+        TodoistSession
+    ),
+    #[serde(rename = "section:deleted")]
+    SectionDeleted(
+        #[serde(rename = "event_data")]
+        TodoistSession
+    ),
+    #[serde(rename = "section:archived")]
+    SectionArchived(
+        #[serde(rename = "event_data")]
+        TodoistSession
+    ),
+    #[serde(rename = "section:unarchived")]
+    SectionUnarchived(
+        #[serde(rename = "event_data")]
+        TodoistSession
+    ),
+    #[serde(rename = "label:added")]
+    LabelAdded(
+        #[serde(rename = "event_data")]
+        TodoistSession
+    ),
+    #[serde(rename = "label:deleted")]
+    LabelDeleted(
+        #[serde(rename = "event_data")]
+        TodoistSession
+    ),
+    #[serde(rename = "label:updated")]
+    LabelUpdated(
+        #[serde(rename = "event_data")]
+        TodoistSession
+    ),
+    #[serde(rename = "filter:added")]
+    FilterAdded(
+        #[serde(rename = "event_data")]
+        TodoistFilter
+    ),
+    #[serde(rename = "filter:deleted")]
+    FilterDeleted(
+        #[serde(rename = "event_data")]
+        TodoistFilter
+    ),
+    #[serde(rename = "filter:updated")]
+    FilterUpdated(
+        #[serde(rename = "event_data")]
+        TodoistFilter
+    ),
+    #[serde(rename = "reminder:fired")]
+    ReminderFired(
+        #[serde(rename = "event_data")]
+        TodoistReminder
+    ),
 
-// #[todoist_event(event_name = "item:added")]
-struct ItemAdded(TodoistItem);
-struct ItemRemoved(TodoistItem);
-struct ItemDeleted(TodoistItem);
-struct ItemCompleted(TodoistItem);
-struct ItemUncompleted(TodoistItem);
-struct NoteAdded(TodoistNote);
-struct NoteUpdated(TodoistNote);
-struct NoteDeleted(TodoistNote);
-struct ProjectAdded(TodoistProject);
-struct ProjectUpdated(TodoistProject);
-struct ProjectDeleted(TodoistProject);
-struct ProjectArchived(TodoistProject);
-struct ProjectUnarchived(TodoistProject);
-struct SectionAdded(TodoistSession);
-struct SectionUpdated(TodoistSession);
-struct SectionDeleted(TodoistSession);
-struct SectionArchived(TodoistSession);
-struct SectionUnarchived(TodoistSession);
-struct LabelAdded(TodoistSession);
-struct LabelDeleted(TodoistSession);
-struct LabelUpdated(TodoistSession);
-struct FilterAdded(TodoistFilter);
-struct FilterDeleted(TodoistFilter);
-struct FilterUpdated(TodoistFilter);
-struct ReminderFired(TodoistReminder);
+
+}
 
 /// please see https://developer.todoist.com/sync/v8/#items
 #[derive(Deserialize)]
