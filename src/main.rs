@@ -191,7 +191,7 @@ async fn main() -> std::io::Result<()> {
         std::process::exit(1);
     }
     let config = config.with_single_cert(cert_chain, keys.remove(0)).unwrap();
-    println!("building HttpServer");
+    println!("building HttpServer, binding ports...");
     HttpServer::new(|| {
         App::new()
             .app_data(
