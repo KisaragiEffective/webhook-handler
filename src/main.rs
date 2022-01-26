@@ -173,7 +173,7 @@ async fn main() -> std::io::Result<()> {
                     .route(
                         web::post()
                             .guard(guard::Header("content-type", "application/json"))
-                            .to(|a, b| handle::<'static, TodoistPayload, DiscordWebhookPayload, _>(Arc::new(JsonHandler::new(
+                            .to(|a, b| handle(Arc::new(JsonHandler::new(
                                 RUNNING_CONFIG.get().unwrap().discord_webhook.clone().unwrap(),
                                 todoist_to_webhook
                             )), a, b))
