@@ -207,22 +207,22 @@ pub struct TodoistCollaborator {
 /// please see https://developer.todoist.com/sync/v8/#item-notes
 #[derive(Deserialize)]
 pub struct TodoistNote {
-    id: NoteID,
-    legacy_id: LegacyNoteID,
-    posted_uid: UserID,
-    item_id: TaskID,
-    legacy_item_id: LegacyTaskID,
-    project_id: ProjectID,
-    legacy_project_id: LegacyProjectID,
-    content: String,
-    file_attachment: TodoistFileAttachment,
-    uids_to_notify: Option<Vec<UserID>>,
+    pub id: NoteID,
+    pub legacy_id: LegacyNoteID,
+    pub posted_uid: UserID,
+    pub item_id: TaskID,
+    pub legacy_item_id: LegacyTaskID,
+    pub project_id: ProjectID,
+    pub legacy_project_id: LegacyProjectID,
+    pub content: String,
+    pub file_attachment: TodoistFileAttachment,
+    pub uids_to_notify: Option<Vec<UserID>>,
     #[serde(deserialize_with = "deserialize_one_zero_bool")]
-    is_deleted: bool,
-    // Posted date
+    pub is_deleted: bool,
+    /// Posted date
     #[serde(deserialize_with = "deserialize_iso8601")] // ?
-    posted: DateTime,
-    reactions: Reactions,
+    pub posted: DateTime,
+    pub reactions: Reactions,
 }
 
 
