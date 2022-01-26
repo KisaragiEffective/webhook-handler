@@ -142,27 +142,28 @@ async fn main() -> std::io::Result<()> {
     // See https://www.apache.org/licenses/LICENSE-2.0.txt for full text.
     println!("starting");
     // load SSL keys
-    let mut config = ServerConfig::builder()
-        .with_safe_defaults()
-        .with_no_client_auth();
+    let mut config = {
+        println!("loading cert.pem");
+        let cert_file = &mut BufReader::new(File::open("cert.pem").unwrap());
+        let cert_chain = certs(cert_file).unwrap().iter().map(|a| Certificate(a.clone())).collect();
+        println!("loading key.pem");
+        let key_file = &mut BufReader::new(File::open("key.pem").unwrap());
+        let mut keys = pkcs8_private_keys(key_file).unwrap().iter().map(|x| PrivateKey(x.clone())).collect::<Vec<_>>();
+        if keys.is_empty() {
+            eprintln!("Could not locate PKCS 8 private keys.");
+            std::process::exit(1);
+        }
+        ServerConfig::builder()
+            .with_safe_defaults()
+            .with_no_client_auth()
+            .with_single_cert(cert_chain, keys.remove(0)).unwrap()
+    };
 
-    println!("loading cert.pem");
-    let cert_file = &mut BufReader::new(File::open("cert.pem").unwrap());
-    println!("loading key.pem");
-    let key_file = &mut BufReader::new(File::open("key.pem").unwrap());
-    let cert_chain = certs(cert_file).unwrap();
-    let cert_chain = cert_chain.iter().map(|a| Certificate(a.clone())).collect();
-    let mut keys = pkcs8_private_keys(key_file).unwrap().iter().map(|x| PrivateKey(x.clone())).collect::<Vec<_>>();
-    if keys.is_empty() {
-        eprintln!("Could not locate PKCS 8 private keys.");
-        std::process::exit(1);
-    }
-    let config = config.with_single_cert(cert_chain, keys.remove(0)).unwrap();
     println!("Reading config...");
     let running_config = File::open("data/config.yml").unwrap();
-    RUNNING_CONFIG.set(serde_json::from_reader::<_, crate::config::config::Config>(BufReader::new(running_config)).unwrap());
-    println!("building HttpServer, binding ports...");
-    HttpServer::new(|| {
+    RUNNING_CONFIG.set(serde_json::from_reader(BufReader::new(running_config)).unwrap());
+    println!("building HttpServer");
+    let mut http_server = HttpServer::new(|| {
         App::new()
             .app_data(
                 JsonConfig::default().error_handler(json_error_handler)
@@ -184,7 +185,9 @@ async fn main() -> std::io::Result<()> {
                             })
                     )
             )
-    })
+    });
+    println!("binding ports");
+    http_server
         .bind_rustls("127.0.0.1:443", config)?
         .bind("127.0.0.1:80")?
         .run()
