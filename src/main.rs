@@ -114,9 +114,9 @@ fn todoist_to_webhook(incoming_data: TodoistPayload) -> DiscordWebhookPayload {
                 embeds: EmbedCollection(vec![
                     Embed {
                         title: None,
-                        description: None,
+                        description: Some(note.content),
                         url: None,
-                        color: None,
+                        color: Some(0x88110022),
                         footer: None,
                         image: None,
                         thumbnail: None,
