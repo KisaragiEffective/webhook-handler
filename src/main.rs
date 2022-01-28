@@ -13,87 +13,20 @@ use std::io::BufReader;
 use std::marker::PhantomData;
 use once_cell::sync::OnceCell;
 use std::sync::Arc;
-use actix_web::{App, error, guard, HttpRequest, HttpResponse, HttpServer, Responder, web};
-use actix_web::web::{Json, JsonConfig, Query};
+use actix_web::{App, guard, HttpResponse, HttpServer, Responder, web};
+use actix_web::web::JsonConfig;
 use serde::{Deserialize, Deserializer, Serialize};
-use anyhow::anyhow;
 use rustls::{Certificate, PrivateKey, ServerConfig};
 use rustls_pemfile::{certs, pkcs8_private_keys};
-use crate::generic_format_io::{incoming::GenericIncomingDeserializer, handler::GenericHandler, outgoing::GenericOutgoingSerializer};
+use generic_format_io::handler;
+use generic_format_io::handler::JsonHandler;
+use crate::generic_format_io::outgoing::GenericOutgoingSerializer;
 use crate::payload::todoist::{TodoistEvent, TodoistPayload};
 use crate::payload::discord::{DiscordWebhookPayload, Embed, EmbedCollection, EmbedField, EmbedFields};
 use crate::call::api_key::ApiKey;
 use crate::config::config::Config;
 
 type PhantomLifetime<'a> = PhantomData<&'a ()>;
-
-struct JsonHandler<'de, D: Deserialize<'de>, S: Serialize, F: 'static + FnOnce(D) -> S + ?Sized> {
-    to: String,
-    f: Arc<F>,
-    __phantom_de: PhantomLifetime<'de>,
-    __phantom_s: PhantomData<S>,
-    __phantom_d: PhantomData<D>
-}
-
-impl <'de, D: Deserialize<'de>, S: Serialize, F: 'static + FnOnce(D) -> S> JsonHandler<'de, D, S, F> {
-    fn new(to: String, f: F) -> Self {
-        JsonHandler::<'de, D, S, F> {
-            to, f: Arc::new(f),
-            __phantom_d: PhantomData,
-            __phantom_s: PhantomData,
-            __phantom_de: PhantomData
-        }
-    }
-}
-
-// TODO: input type can be inferred by Content-Type
-async fn handle<'de, D: Deserialize<'de>, S: Serialize, F: 'static + Copy + FnOnce(D) -> S>(
-    handler: Arc<JsonHandler<'de, D, S, F>>,
-    Json(incoming_data): actix_web::web::Json<D>,
-    Query(api_key): actix_web::web::Query<ApiKey>,
-) -> impl Responder {
-    // TODO: api_key=something in query string
-    dbg!("enter");
-    let client = reqwest::Client::new();
-    let outgoing_data: &S = &(handler.f)(incoming_data);
-    let result = client
-        .post(&handler.to)
-        .json(outgoing_data)
-        .send()
-        .await
-        .map(|_| ())
-        .map_err(|x| anyhow!(x));
-    match result {
-        Ok(_) => {
-            HttpResponse::NoContent()
-        }
-        Err(e) => {
-            eprintln!("ERROR!!!: {:?}", e);
-            HttpResponse::NotModified()
-        }
-    }
-}
-
-#[derive(Serialize)]
-struct ErrorDescription {
-    reason: String
-}
-
-fn json_error_handler(err: error::JsonPayloadError, _req: &HttpRequest) -> error::Error {
-    use actix_web::error::JsonPayloadError;
-
-    let detail = err.to_string();
-    let resp = match &err {
-        JsonPayloadError::ContentType => {
-            HttpResponse::UnsupportedMediaType().body(detail)
-        }
-        JsonPayloadError::Deserialize(json_err) if json_err.is_data() => {
-            HttpResponse::UnprocessableEntity().body(detail)
-        }
-        _ => HttpResponse::BadRequest().body(detail),
-    };
-    error::InternalError::from_response(err, resp).into()
-}
 
 fn todoist_to_webhook(incoming_data: TodoistPayload) -> DiscordWebhookPayload {
     let username = Some("Todoist".to_string());
@@ -165,14 +98,14 @@ async fn main() -> std::io::Result<()> {
     let mut http_server = HttpServer::new(|| {
         App::new()
             .app_data(
-                JsonConfig::default().error_handler(json_error_handler)
+                JsonConfig::default().error_handler(handler::json_error_handler)
             )
             .service(
                 web::resource("/api/from/todoist/to/discord")
                     .route(
                         web::post()
                             .guard(guard::Header("content-type", "application/json"))
-                            .to(|a, b| handle(Arc::new(JsonHandler::new(
+                            .to(|a, b| handler::handle(Arc::new(JsonHandler::new(
                                 RUNNING_CONFIG.get().unwrap().discord_webhook.clone().unwrap(),
                                 todoist_to_webhook
                             )), a, b))
@@ -195,5 +128,3 @@ async fn main() -> std::io::Result<()> {
     println!("stopped");
     Ok(())
 }
-
-struct TypeBox<T>(T);
