@@ -155,7 +155,7 @@ async fn main() -> std::io::Result<()> {
     };
 
     println!("Reading config...");
-    let running_config = File::open("data/config.yml").unwrap();
+    let running_config = File::open("data/config.json").unwrap();
     RUNNING_CONFIG.set(serde_json::from_reader(BufReader::new(running_config)).unwrap());
     println!("building HttpServer");
     let mut http_server = HttpServer::new(|| {
