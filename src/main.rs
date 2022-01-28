@@ -46,6 +46,7 @@ impl <'de, D: Deserialize<'de>, S: Serialize, F: 'static + FnOnce(D) -> S> JsonH
     }
 }
 
+// TODO: input type can be inferred by Content-Type
 async fn handle<'de, D: Deserialize<'de>, S: Serialize, F: 'static + Copy + FnOnce(D) -> S>(
     handler: Arc<JsonHandler<'de, D, S, F>>,
     Json(incoming_data): actix_web::web::Json<D>,
