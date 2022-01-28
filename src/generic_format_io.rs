@@ -1,3 +1,3 @@
-mod incoming;
+pub(crate) mod incoming;
 pub(crate) mod outgoing;
-mod handler;
+pub(crate) mod handler;

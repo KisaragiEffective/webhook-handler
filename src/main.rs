@@ -19,9 +19,9 @@ use serde::{Deserialize, Deserializer, Serialize};
 use anyhow::anyhow;
 use rustls::{Certificate, PrivateKey, ServerConfig};
 use rustls_pemfile::{certs, pkcs8_private_keys};
-use crate::generic_format_io::outgoing::GenericOutgoingSerializer;
+use crate::generic_format_io::{incoming::GenericIncomingDeserializer, handler::GenericHandler, outgoing::GenericOutgoingSerializer};
 use crate::payload::todoist::{TodoistEvent, TodoistPayload};
-use crate::payload::discord::{DiscordWebhookPayload, Embed, EmbedCollection};
+use crate::payload::discord::{DiscordWebhookPayload, Embed, EmbedCollection, EmbedField, EmbedFields};
 use crate::call::api_key::ApiKey;
 use crate::config::config::Config;
 
@@ -108,17 +108,20 @@ fn todoist_to_webhook(incoming_data: TodoistPayload) -> DiscordWebhookPayload {
                 tts,
                 embeds: EmbedCollection(vec![
                     Embed {
-                        title: None,
+                        title: Some("Note added".to_string()),
                         description: None,
-                        url: None,
-                        color: None,
+                        url: Some("test".to_string()),
+                        color: Some(0xFF34eb5e),
                         footer: None,
                         image: None,
                         thumbnail: None,
                         video: None,
                         provider: None,
                         author: None,
-                        fields: None
+                        fields: (EmbedFields(vec![EmbedField {
+                            name: "description".to_string(),
+                            value: note.content
+                        }]))
                     }
                 ]),
                 components: Default::default()

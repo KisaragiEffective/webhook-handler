@@ -69,8 +69,8 @@ pub struct Embed {
     pub provider: Option<EmbedProvider>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub author: Option<EmbedAuthor>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub fields: Option<EmbedFields>
+    #[serde(default /*, skip_serializing_if = "Option::is_none" */)]
+    pub fields: EmbedFields
 }
 
 /// https://discord.com/developers/docs/resources/channel#embed-object-embed-footer-structure
@@ -140,14 +140,14 @@ pub struct EmbedAuthor {
     proxy_icon_url: Option<String>,
 }
 
-#[derive(Serialize, Eq, PartialEq, Clone, Hash)]
-pub struct EmbedFields(Vec<EmbedField>);
+#[derive(Serialize, Eq, PartialEq, Clone, Hash, Default)]
+pub struct EmbedFields(pub Vec<EmbedField>);
 
 /// https://discord.com/developers/docs/resources/channel#embed-object-embed-field-structure
 #[derive(Serialize, Eq, PartialEq, Clone, Hash)]
 pub struct EmbedField {
-    name: String,
-    value: String,
+    pub(crate) name: String,
+    pub(crate) value: String,
     // #[serde(skip_serializing_if = "_false()")]
     // inline: bool,
 }
