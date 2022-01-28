@@ -7,4 +7,6 @@ pub(crate) struct Config {
     #[serde(deserialize_with = "deserialize_iso8601")]
     created_at: DateTime,
     pub(crate) discord_webhook: Option<String>,
+    pub http_port: u16,
+    pub https_port: u16,
 }

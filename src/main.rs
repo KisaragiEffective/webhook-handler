@@ -186,8 +186,8 @@ async fn main() -> std::io::Result<()> {
     });
     println!("binding ports");
     http_server
-        .bind_rustls("127.0.0.1:443", config)?
-        .bind("127.0.0.1:80")?
+        .bind_rustls(format!("127.0.0.1:{}", RUNNING_CONFIG.get().unwrap().https_port), config)?
+        .bind(format!("127.0.0.1:{}", RUNNING_CONFIG.get().unwrap().http_port))?
         .run()
         .await;
 
