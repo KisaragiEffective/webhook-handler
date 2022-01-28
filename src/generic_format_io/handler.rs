@@ -4,6 +4,7 @@ use std::marker::PhantomData;
 use actix_web::{error, HttpRequest, HttpResponse, Responder};
 use actix_web::web::{Json, Query};
 use anyhow::anyhow;
+use log::{error, trace};
 use crate::{ApiKey, GenericOutgoingSerializer, PhantomLifetime};
 use crate::generic_format_io::incoming::GenericIncomingDeserializer;
 
@@ -53,7 +54,7 @@ pub async fn handle<'de, D: Deserialize<'de>, S: Serialize, F: 'static + Copy + 
     Query(api_key): actix_web::web::Query<ApiKey>,
 ) -> impl Responder {
     // TODO: api_key=something in query string
-    dbg!("enter");
+    trace!("enter");
     let client = reqwest::Client::new();
     let outgoing_data: &S = &(handler.f)(incoming_data);
     let result = client
@@ -68,7 +69,7 @@ pub async fn handle<'de, D: Deserialize<'de>, S: Serialize, F: 'static + Copy + 
             HttpResponse::NoContent()
         }
         Err(e) => {
-            eprintln!("ERROR!!!: {:?}", e);
+            error!("ERROR!!!: {:?}", e);
             HttpResponse::NotModified()
         }
     }

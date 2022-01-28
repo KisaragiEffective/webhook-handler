@@ -15,6 +15,8 @@ use once_cell::sync::OnceCell;
 use std::sync::Arc;
 use actix_web::{App, guard, HttpResponse, HttpServer, Responder, web};
 use actix_web::web::JsonConfig;
+use anyhow::Context;
+use log::{info, trace};
 use serde::{Deserialize, Deserializer, Serialize};
 use rustls::{Certificate, PrivateKey, ServerConfig};
 use rustls_pemfile::{certs, pkcs8_private_keys};
@@ -27,6 +29,27 @@ use crate::call::api_key::ApiKey;
 use crate::config::config::Config;
 
 type PhantomLifetime<'a> = PhantomData<&'a ()>;
+
+fn setup_logger() -> Result<(), fern::InitError> {
+    use fern::colors::*;
+    let mut colors = ColoredLevelConfig::new();
+
+    fern::Dispatch::new()
+        .format(move |out, message, record| {
+            out.finish(format_args!(
+                "{}[{}][{}] {}",
+                chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+                record.target(),
+                colors.color(record.level()),
+                message
+            ))
+        })
+        .level(log::LevelFilter::Trace)
+        .chain(std::io::stdout())
+        .chain(fern::log_file("output.log")?)
+        .apply()?;
+    Ok(())
+}
 
 fn todoist_to_webhook(incoming_data: TodoistPayload) -> DiscordWebhookPayload {
     let username = Some("Todoist".to_string());
@@ -73,12 +96,19 @@ async fn main() -> std::io::Result<()> {
     // from https://github.com/actix/examples.
     // See https://www.apache.org/licenses/LICENSE-2.0.txt for full text.
     println!("starting");
+    match setup_logger().context("failed to setup logger") {
+        Ok(_) => {}
+        Err(err) => {
+            eprintln!("failed to initialize logger: {:?}", err);
+        }
+    }
+
     // load SSL keys
     let mut config = {
-        println!("loading cert.pem");
+        trace!("loading cert.pem");
         let cert_file = &mut BufReader::new(File::open("cert.pem").unwrap());
         let cert_chain = certs(cert_file).unwrap().iter().map(|a| Certificate(a.clone())).collect();
-        println!("loading key.pem");
+        trace!("loading key.pem");
         let key_file = &mut BufReader::new(File::open("key.pem").unwrap());
         let mut keys = pkcs8_private_keys(key_file).unwrap().iter().map(|x| PrivateKey(x.clone())).collect::<Vec<_>>();
         if keys.is_empty() {
@@ -91,12 +121,13 @@ async fn main() -> std::io::Result<()> {
             .with_single_cert(cert_chain, keys.remove(0)).unwrap()
     };
 
-    println!("Reading config...");
+    trace!("Reading config...");
     let running_config = File::open("data/config.json").unwrap();
     RUNNING_CONFIG.set(serde_json::from_reader(BufReader::new(running_config)).unwrap());
-    println!("building HttpServer");
+    trace!("building HttpServer");
     let mut http_server = HttpServer::new(|| {
         App::new()
+            .wrap(actix_web::middleware::Logger::default())
             .app_data(
                 JsonConfig::default().error_handler(handler::json_error_handler)
             )
@@ -118,13 +149,13 @@ async fn main() -> std::io::Result<()> {
                     )
             )
     });
-    println!("binding ports");
+    trace!("binding ports");
     http_server
         .bind_rustls(format!("127.0.0.1:{}", RUNNING_CONFIG.get().unwrap().https_port), config)?
         .bind(format!("127.0.0.1:{}", RUNNING_CONFIG.get().unwrap().http_port))?
         .run()
-        .await;
+        .await?;
 
-    println!("stopped");
+    info!("stopped");
     Ok(())
 }
