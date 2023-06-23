@@ -1,5 +1,7 @@
 #![warn(clippy::pedantic, clippy::nursery)]
 #![deny(type_alias_bounds, legacy_derive_helpers, late_bound_lifetime_arguments)]
+// https://github.com/rust-lang/rust-clippy/issues/10645
+#![allow(clippy::future_not_send)]
 mod payload;
 mod call;
 mod config;
