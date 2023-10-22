@@ -145,7 +145,7 @@ async fn main() -> std::io::Result<()> {
                     )
                     .route(
                         web::post()
-                            .to(|| {
+                            .to(|| async {
                                 HttpResponse::BadRequest().body("Content-Type header must be included")
                             })
                     )
