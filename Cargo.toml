@@ -18,7 +18,7 @@ reqwest = { version = "0.11.22", features = [ "json" ] }
 anyhow = "1.0.75"
 rustls = "0.20.9"
 # this crate is needed for pem-file handling
-rustls-pemfile = "1.0.3"
+rustls-pemfile = "1.0.4"
 rand = "0.8.5"
 rand_chacha = "0.3.1"
 base64 = { version = "0.21.4" }
