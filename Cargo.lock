@@ -21,9 +21,9 @@ dependencies = [
 
 [[package]]
 name = "actix-http"
-version = "3.4.0"
+version = "3.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a92ef85799cba03f76e4f7c10f533e66d87c9a7e7055f3391f09000ad8351bc9"
+checksum = "d223b13fd481fc0d1f83bb12659ae774d9e3601814c68a0bc539731698cca743"
 dependencies = [
  "actix-codec",
  "actix-rt",
@@ -122,9 +122,9 @@ dependencies = [
 
 [[package]]
 name = "actix-tls"
-version = "3.1.1"
+version = "3.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72616e7fbec0aa99c6f3164677fa48ff5a60036d0799c98cab894a44f3e0efc3"
+checksum = "d4cce60a2f2b477bc72e5cde0af1812a6e82d8fd85b5570a5dcf2a5bf2c5be5f"
 dependencies = [
  "actix-rt",
  "actix-service",
@@ -132,8 +132,6 @@ dependencies = [
  "futures-core",
  "impl-more",
  "pin-project-lite",
- "rustls 0.21.7",
- "rustls-webpki",
  "tokio",
  "tokio-rustls",
  "tokio-util",
@@ -153,9 +151,9 @@ dependencies = [
 
 [[package]]
 name = "actix-web"
-version = "4.4.0"
+version = "4.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e4a5b5e29603ca8c94a77c65cf874718ceb60292c5a5c3e5f4ace041af462b9"
+checksum = "43a6556ddebb638c2358714d853257ed226ece6023ef9364f23f0c70737ea984"
 dependencies = [
  "actix-codec",
  "actix-http",
@@ -1317,34 +1315,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "rustls"
-version = "0.21.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd8d6c9f025a446bc4d18ad9632e69aec8f287aa84499ee335599fabd20c3fd8"
-dependencies = [
- "log",
- "ring 0.16.20",
- "rustls-webpki",
- "sct",
-]
-
-[[package]]
 name = "rustls-pemfile"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1c74cae0a4cf6ccbbf5f359f08efdf8ee7e1dc532573bf0db71968cb56b1448c"
 dependencies = [
  "base64",
-]
-
-[[package]]
-name = "rustls-webpki"
-version = "0.101.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c7d5dece342910d9ba34d259310cae3e0154b873b35408b787b59bce53d34fe"
-dependencies = [
- "ring 0.16.20",
- "untrusted 0.7.1",
 ]
 
 [[package]]
@@ -1650,7 +1626,7 @@ version = "0.23.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c43ee83903113e03984cb9e5cebe6c04a5116269e900e3ddba8f068a62adda59"
 dependencies = [
- "rustls 0.20.9",
+ "rustls",
  "tokio",
  "webpki",
 ]
@@ -1870,7 +1846,7 @@ dependencies = [
  "rand",
  "rand_chacha",
  "reqwest",
- "rustls 0.20.9",
+ "rustls",
  "rustls-pemfile",
  "serde",
  "serde_json",
@@ -2004,20 +1980,19 @@ dependencies = [
 
 [[package]]
 name = "zstd"
-version = "0.12.4"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a27595e173641171fc74a1232b7b1c7a7cb6e18222c11e9dfb9888fa424c53c"
+checksum = "bffb3309596d527cfcba7dfc6ed6052f1d39dfbd7c867aa2e865e4a449c10110"
 dependencies = [
  "zstd-safe",
 ]
 
 [[package]]
 name = "zstd-safe"
-version = "6.0.6"
+version = "7.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee98ffd0b48ee95e6c5168188e44a54550b1564d9d530ee21d5f0eaed1069581"
+checksum = "43747c7422e2924c11144d5229878b98180ef8b06cca4ab5af37afc8a8d8ea3e"
 dependencies = [
- "libc",
  "zstd-sys",
 ]
 
