@@ -21,7 +21,7 @@ rustls = "0.20.9"
 rustls-pemfile = "1.0.4"
 rand = "0.8.5"
 rand_chacha = "0.3.1"
-base64 = { version = "0.21.5" }
+base64 = { version = "0.22.0" }
 log = "0.4.20"
 fern = { version = "0.6.2", features = [ "colored" ] }
 chrono = "0.4.31"
